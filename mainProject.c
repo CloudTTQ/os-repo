@@ -93,9 +93,9 @@ void createSymLink(char *fName){
 void menuRegFile(char *fName){
     char *opt = getOptions();
     struct stat st;
-    stat(fName, &st); 
+    stat(fName, &st);
 
-    printf("%s\n",opt);
+    //printf("%s\n",opt);
 
     for(int i=1; i<strlen(opt); i++){
         //printf("%c\n", opt[i]);
@@ -132,14 +132,104 @@ void menuRegFile(char *fName){
     }
 }
 
+void menuSymLink(char* fName){
+    char *opt = getOptions();
+    struct stat st;
+    stat(fName, &st);
+
+    for(int i=1; i<strlen(opt); i++){
+        //printf("%c\n", opt[i]);
+
+        switch (opt[i])
+        {
+        case 'n':
+            printf("Name: %s\n",fName);
+            break;
+
+        case 'd':
+            printf("Size: %ld\n",st.st_size);
+            break;
+
+        case 'l':
+            unlink(fName);
+            break;
+        
+        case 'a':
+            printAccessRights(st.st_mode);
+            break;
+
+        default:
+            printf("Wrong input, %c does not exist!",opt[i]);
+        }
+    }
+}
+
+void menuDir(char* fName){
+    char *opt = getOptions();
+    struct stat st;
+    stat(fName, &st);
+
+    for(int i=1; i<strlen(opt); i++){
+        //printf("%c\n", opt[i]);
+
+        switch (opt[i])
+        {
+        case 'n':
+            printf("Name: %s\n",fName);
+            break;
+
+        case 'd':
+            printf("Size: %ld\n",st.st_size);
+            break;
+        
+        case 'a':
+            printAccessRights(st.st_mode);
+            break;
+
+        case 'c':
+            //how many .c files inside?
+            break;
+
+        default:
+            printf("Wrong input, %c does not exist!",opt[i]);
+        }
+    }
+}
+
 int main(int argc, char** argv){
-    if(argc != 2){
+    if(argc == 1){
         printf("Not good");
         return 1;
     }
 
-    printName(argv[1]);
-    menuRegFile(argv[1]);
+    struct stat st;
+
+    for(int i=1; i< argc; i++){
+
+    stat(argv[i],&st);
+    printName(argv[i]);
+    switch (st.st_mode & __S_IFMT)
+    {
+    case __S_IFREG:
+        printf("Regular\n");
+        menuRegFile(argv[i]);
+        break;
+
+    case __S_IFLNK:
+        printf("SymLink\n");
+        menuSymLink(argv[i]);
+        break;
+
+    case __S_IFDIR:
+        printf("Directory\n");
+        menuDir(argv[i]);
+        break;
+    
+    default:
+    printf("Filetype not supported!\n");
+        break;
+    }
+    }
 
     return 0;
 }
