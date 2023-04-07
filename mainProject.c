@@ -80,6 +80,7 @@ void printAccessRights(int rights){
 
 void createSymLink(char *fName){
     char symName[20];
+    printf("Enter name for the symlink file: ");
     scanf("%s",symName);
     //printf("%s",symName);
 
