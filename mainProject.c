@@ -87,7 +87,23 @@ void createSymLink(char *fName){
     if(!symlink(fName,symName)){
         printf("Symlink created successfuly!\n");
     }
+}
 
+int getLinesRegFile(char* filename){
+    FILE *file = fopen(filename,"r");
+
+    if(file == NULL){
+        printf("File doesn't exist: %s\n",filename);
+    }
+
+    int fileLines = 0;
+    for(char c = getc(file); c!=EOF; c = getc(file)){
+        if(c == '\n'){
+            fileLines++;
+        }
+    }
+    fclose(file);
+    return fileLines;
 }
 
 void menuRegFile(char *fName){
@@ -197,39 +213,72 @@ void menuDir(char* fName){
 }
 
 int main(int argc, char** argv){
+    int x;
+
     if(argc == 1){
         printf("Not good");
         return 1;
     }
 
+    int pid1 = fork();
+    int pid2;
+
+    if(pid1!=0){
+        pid2 = fork();
+    }
+
     struct stat st;
 
-    for(int i=1; i< argc; i++){
-
-    stat(argv[i],&st);
-    printName(argv[i]);
-    switch (st.st_mode & __S_IFMT)
+    for(int i=1; i< argc; i++)
     {
-    case __S_IFREG:
-        printf("Regular\n");
-        menuRegFile(argv[i]);
-        break;
+        stat(argv[i],&st);
+        //
 
-    case __S_IFLNK:
-        printf("SymLink\n");
-        menuSymLink(argv[i]);
-        break;
+        if(pid1==0){
+            printName(argv[i]);
+            switch (st.st_mode & __S_IFMT)
+            {
+                case __S_IFREG:
+                    printf("Regular\n");
+                    menuRegFile(argv[i]);
+                    break;
 
-    case __S_IFDIR:
-        printf("Directory\n");
-        menuDir(argv[i]);
-        break;
-    
-    default:
-    printf("Filetype not supported!\n");
-        break;
+                case __S_IFLNK:
+                    printf("SymLink\n");
+                    menuSymLink(argv[i]);
+                    break;
+
+                case __S_IFDIR:
+                    printf("Directory\n");
+                    menuDir(argv[i]);
+                    break;
+                
+                default:
+                printf("Filetype not supported!\n");
+                    break;
+            }
+        }else if(pid2 == 0){
+            switch (st.st_mode & __S_IFMT)
+            {
+                case __S_IFREG:
+                    printf("Lines in file %s: %d\n",argv[i],getLinesRegFile(argv[i]));
+                    break;
+
+                case __S_IFLNK:
+                    break;
+
+                case __S_IFDIR:
+                    break;
+                
+                default:
+                printf("Filetype not supported!\n");
+                    break;
+            }
+        }
     }
-    }
+
+    wait(&x);
+    wait(&x);
 
     return 0;
 }
