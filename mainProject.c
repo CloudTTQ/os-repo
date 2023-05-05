@@ -106,6 +106,12 @@ int getLinesRegFile(char* filename){
     return fileLines;
 }
 
+void createTxtDirFile(char* dirname){
+    dirname = strcat(dirname, ".txt");
+    FILE *file = fopen(dirname, "w");
+    fclose(file);
+}
+
 void menuRegFile(char *fName){
     char *opt = getOptions();
     struct stat st;
@@ -232,7 +238,6 @@ int main(int argc, char** argv){
     for(int i=1; i< argc; i++)
     {
         stat(argv[i],&st);
-        //
 
         if(pid1==0){
             printName(argv[i]);
@@ -265,9 +270,14 @@ int main(int argc, char** argv){
                     break;
 
                 case __S_IFLNK:
+                    argv[i] = strcat(argv[i],".txt");
+                    FILE *file = fopen(argv[i],"w");
+                    fclose(file);
+                    chmod(argv[i],760);
                     break;
 
                 case __S_IFDIR:
+                    createTxtDirFile(argv[i]);
                     break;
                 
                 default:
@@ -279,6 +289,5 @@ int main(int argc, char** argv){
 
     wait(&x);
     wait(&x);
-
     return 0;
 }
