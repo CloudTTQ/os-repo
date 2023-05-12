@@ -5,6 +5,7 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 void printName(char *fName){
     printf("%s: ",fName);
@@ -12,6 +13,7 @@ void printName(char *fName){
 
 char* getOptions(){
     char *opt = malloc(10*sizeof(char));
+    printf("Input options: ");
     scanf("%s",opt);
     return opt;
 }
@@ -108,8 +110,7 @@ int getLinesRegFile(char* filename){
 
 void createTxtDirFile(char* dirname){
     dirname = strcat(dirname, ".txt");
-    FILE *file = fopen(dirname, "w");
-    fclose(file);
+    open(dirname, O_WRONLY | O_APPEND | O_CREAT, 0644);
 }
 
 void menuRegFile(char *fName){
@@ -149,7 +150,9 @@ void menuRegFile(char *fName){
             break;
 
         default:
-            printf("Wrong input, %c does not exist!",opt[i]);
+            printf("Wrong input, %c does not exist, input again!\n",opt[i]);
+            menuRegFile(fName);
+            break;
         }
     }
 }
@@ -181,7 +184,9 @@ void menuSymLink(char* fName){
             break;
 
         default:
-            printf("Wrong input, %c does not exist!",opt[i]);
+            printf("Wrong input, %c does not exist, input again!\n",opt[i]);
+            menuRegFile(fName);
+            break;
         }
     }
 }
@@ -213,7 +218,9 @@ void menuDir(char* fName){
             break;
 
         default:
-            printf("Wrong input, %c does not exist!",opt[i]);
+            printf("Wrong input, %c does not exist, input again!\n",opt[i]);
+            menuRegFile(fName);
+            break;
         }
     }
 }
@@ -225,19 +232,15 @@ int main(int argc, char** argv){
         printf("Not good");
         return 1;
     }
-
-    int pid1 = fork();
+    int pid1;
     int pid2;
-
-    if(pid1!=0){
-        pid2 = fork();
-    }
 
     struct stat st;
 
     for(int i=1; i< argc; i++)
     {
         stat(argv[i],&st);
+        pid1 = fork();
 
         if(pid1==0){
             printName(argv[i]);
@@ -262,7 +265,12 @@ int main(int argc, char** argv){
                 printf("Filetype not supported!\n");
                     break;
             }
-        }else if(pid2 == 0){
+            exit(0);
+        }
+
+        pid2 = fork();
+
+        if(pid2 == 0){
             switch (st.st_mode & __S_IFMT)
             {
                 case __S_IFREG:
@@ -271,8 +279,7 @@ int main(int argc, char** argv){
 
                 case __S_IFLNK:
                     argv[i] = strcat(argv[i],".txt");
-                    FILE *file = fopen(argv[i],"w");
-                    fclose(file);
+                    open(argv[i], O_WRONLY | O_APPEND | O_CREAT, 0644);
                     chmod(argv[i],760);
                     break;
 
@@ -281,13 +288,14 @@ int main(int argc, char** argv){
                     break;
                 
                 default:
-                printf("Filetype not supported!\n");
+                    printf("Filetype not supported!\n");
                     break;
             }
+            exit(0);
         }
-    }
 
-    wait(&x);
-    wait(&x);
+        wait(&x);
+        wait(&x);
+    }
     return 0;
 }
