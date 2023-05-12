@@ -122,6 +122,7 @@ void menuRegFile(char *fName){
 
     for(int i=1; i<strlen(opt); i++){
         //printf("%c\n", opt[i]);
+        int out = 0;
 
         switch (opt[i])
         {
@@ -152,6 +153,11 @@ void menuRegFile(char *fName){
         default:
             printf("Wrong input, %c does not exist, input again!\n",opt[i]);
             menuRegFile(fName);
+            out=1;
+            break;
+        }
+
+        if(out==1){
             break;
         }
     }
@@ -164,6 +170,7 @@ void menuSymLink(char* fName){
 
     for(int i=1; i<strlen(opt); i++){
         //printf("%c\n", opt[i]);
+        int out=0;
 
         switch (opt[i])
         {
@@ -186,6 +193,11 @@ void menuSymLink(char* fName){
         default:
             printf("Wrong input, %c does not exist, input again!\n",opt[i]);
             menuRegFile(fName);
+            out=1;
+            break;
+        }
+
+        if(out==1){
             break;
         }
     }
@@ -198,6 +210,7 @@ void menuDir(char* fName){
 
     for(int i=1; i<strlen(opt); i++){
         //printf("%c\n", opt[i]);
+        int out=0;
 
         switch (opt[i])
         {
@@ -220,6 +233,11 @@ void menuDir(char* fName){
         default:
             printf("Wrong input, %c does not exist, input again!\n",opt[i]);
             menuRegFile(fName);
+            out=1;
+            break;
+        }
+
+        if(out==1){
             break;
         }
     }
@@ -243,6 +261,36 @@ int main(int argc, char** argv){
         pid1 = fork();
 
         if(pid1==0){
+            switch (st.st_mode & __S_IFMT)
+            {
+                case __S_IFREG:
+                    if(strstr(argv[i],".c")){
+                        //run cFileHandler.sh
+                    }else{
+                        printf("Lines in file %s: %d\n",argv[i],getLinesRegFile(argv[i]));
+                    }
+                    break;
+
+                case __S_IFLNK:
+                    argv[i] = strcat(argv[i],".txt");
+                    open(argv[i], O_WRONLY | O_APPEND | O_CREAT, 0644);
+                    chmod(argv[i],760);
+                    break;
+
+                case __S_IFDIR:
+                    createTxtDirFile(argv[i]);
+                    break;
+                
+                default:
+                    printf("Filetype not supported!\n");
+                    break;
+            }
+            exit(0);
+        }
+
+        pid2 = fork();
+
+        if(pid2 == 0){
             printName(argv[i]);
             switch (st.st_mode & __S_IFMT)
             {
@@ -263,32 +311,6 @@ int main(int argc, char** argv){
                 
                 default:
                 printf("Filetype not supported!\n");
-                    break;
-            }
-            exit(0);
-        }
-
-        pid2 = fork();
-
-        if(pid2 == 0){
-            switch (st.st_mode & __S_IFMT)
-            {
-                case __S_IFREG:
-                    printf("Lines in file %s: %d\n",argv[i],getLinesRegFile(argv[i]));
-                    break;
-
-                case __S_IFLNK:
-                    argv[i] = strcat(argv[i],".txt");
-                    open(argv[i], O_WRONLY | O_APPEND | O_CREAT, 0644);
-                    chmod(argv[i],760);
-                    break;
-
-                case __S_IFDIR:
-                    createTxtDirFile(argv[i]);
-                    break;
-                
-                default:
-                    printf("Filetype not supported!\n");
                     break;
             }
             exit(0);
